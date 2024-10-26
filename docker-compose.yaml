@@ -1,0 +1,74 @@
+services:
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    networks:
+      - webnet
+
+  gradle:
+    image: gradle:latest
+    container_name: gradle
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: gradle build
+    networks:
+      - webnet
+
+  drupal:
+    image: drupal:latest
+    container_name: drupal
+    depends_on:
+      - mysql
+    ports:
+      - "8081:80"
+    environment:
+      DRUPAL_DATABASE_HOST: mysql
+      DRUPAL_DATABASE_NAME: drupal
+      DRUPAL_DATABASE_USER: drupal
+      DRUPAL_DATABASE_PASSWORD: drupal
+    networks:
+      - webnet
+
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: drupal
+      MYSQL_USER: drupal
+      MYSQL_PASSWORD: drupal
+    networks:
+      - webnet
+
+  couchbase:
+    image: couchbase:latest
+    container_name: couchbase
+    ports:
+      - "8091-8094:8091-8094"
+      - "11210:11210"
+    environment:
+      COUCHBASE_ADMINISTRATOR_USERNAME: admin
+      COUCHBASE_ADMINISTRATOR_PASSWORD: password
+    networks:
+      - webnet
+
+  nodejs:
+    build: ./node_app
+    container_name: nodejs
+    ports:
+      - "3000:3000"
+    networks:
+      - webnet
+
+networks:
+  webnet:
+
+volumes:
+  jenkins_home:
